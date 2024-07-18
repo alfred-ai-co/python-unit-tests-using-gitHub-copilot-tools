@@ -17,19 +17,25 @@ assignees=[
 
 def schedule_projects(projects, assignees):
     projects.sort(key=lambda x: (x["priority"], x["deadline"]), reverse=True)
-    assignee_heap=[(0, assignee["name"], assignee) for assignee in assignees]
+    assignee_heap = [(0, assignee["name"], assignee) for assignee in assignees]
     heapq.heapify(assignee_heap)
-    assignments=[]
+    assignments = []
     for project in projects:
-        workload, assignee_name, assignee=heapq.heappop(assignee_heap)
-        assignments.append({"project": project, "assignee": assignee})
-        workload+=1
-        heapq.heappush(assignee_heap, (workload, assignee_name, assignee))
+        project_assignees = []
+        assignees_per_project=(len(assignees)+1)//4
+        for _ in range(assignees_per_project):
+            if assignee_heap:
+                workload, assignee_name, assignee=heapq.heappop(assignee_heap)
+                project_assignees.append(assignee)
+                workload+=1
+                heapq.heappush(assignee_heap, (workload, assignee_name, assignee))
+        assignments.append({"project": project, "assignees": project_assignees})
     return assignments
 
 if __name__=="__main__":
     assignments=schedule_projects(projects, assignees)
     for assignment in assignments:
         project=assignment["project"]
-        assignee=assignment["assignee"]
-        print(f"{project['name']} (Priority: {project['priority']}) Assigned To {assignee['name']} - Deadline: {project['deadline']}")
+        assignees=assignment["assignees"]
+        assignee_names=", ".join(assignee['name'] for assignee in assignees)
+        print(f"{project['name']} (Priority: {project['priority']}) Assigned To {assignee_names} - Deadline: {project['deadline']}")
